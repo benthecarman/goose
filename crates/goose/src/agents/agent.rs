@@ -229,6 +229,14 @@ pub struct AgentConfig {
     pub session_name_update_tx: Option<mpsc::UnboundedSender<SessionNameUpdate>>,
     pub use_login_shell_path: Option<bool>,
     pub is_subagent: bool,
+    /// Shared with the parent agent when this config describes a subagent.
+    /// Subagent tool confirmations register here so confirmations delivered
+    /// to the parent agent reach the subagent that awaits them.
+    pub tool_confirmation_router: Option<ToolConfirmationRouter>,
+    /// The session that spawned this subagent, when this config describes a
+    /// subagent. Subagent confirmations are keyed under the parent session
+    /// in the shared router so the parent's client can answer them.
+    pub parent_session_id: Option<String>,
 }
 
 impl AgentConfig {
@@ -253,6 +261,8 @@ impl AgentConfig {
             session_name_update_tx: None,
             use_login_shell_path: None,
             is_subagent: false,
+            tool_confirmation_router: None,
+            parent_session_id: None,
         }
     }
 
@@ -271,6 +281,23 @@ impl AgentConfig {
 
     pub fn with_use_login_shell_path(mut self, use_login_shell_path: bool) -> Self {
         self.use_login_shell_path = Some(use_login_shell_path);
+        self
+    }
+
+    /// Share the parent's confirmation router so subagent tool confirmations
+    /// are delivered through `Agent::handle_confirmation` on the parent.
+    pub fn with_tool_confirmation_router(
+        mut self,
+        tool_confirmation_router: Option<ToolConfirmationRouter>,
+    ) -> Self {
+        self.tool_confirmation_router = tool_confirmation_router;
+        self
+    }
+
+    /// Record the session that spawned this subagent, so its confirmations
+    /// register under the parent's session key in the shared router.
+    pub fn with_parent_session_id(mut self, parent_session_id: Option<String>) -> Self {
+        self.parent_session_id = parent_session_id;
         self
     }
 
@@ -440,6 +467,7 @@ impl Agent {
         let permission_manager = Arc::clone(&config.permission_manager);
         let use_login_shell_path = config.resolve_use_login_shell_path();
         let is_subagent = config.is_subagent;
+        let tool_confirmation_router = config.tool_confirmation_router.clone().unwrap_or_default();
         Self {
             provider: provider.clone(),
             config,
@@ -451,10 +479,11 @@ impl Agent {
                 client_name,
                 capabilities,
                 use_login_shell_path,
+                tool_confirmation_router.clone(),
             )),
             final_output_tool: Arc::new(Mutex::new(None)),
             prompt_manager: Mutex::new(PromptManager::new()),
-            tool_confirmation_router: ToolConfirmationRouter::new(),
+            tool_confirmation_router,
             tool_confirmation_coordinator: ToolConfirmationCoordinator::new(),
             retry_manager: RetryManager::new(),
             tool_inspection_manager: Self::create_tool_inspection_manager(

@@ -31,6 +31,7 @@ use super::extension::{
     ExtensionConfig, ExtensionError, ExtensionInfo, ExtensionResult, PlatformExtensionContext,
     PLATFORM_EXTENSIONS,
 };
+use super::tool_confirmation_router::ToolConfirmationRouter;
 use super::tool_execution::{ToolCallContext, ToolCallNotificationEmitter, ToolCallResult};
 use super::types::SharedProvider;
 use crate::action_required_manager::ActionRequiredManager;
@@ -1381,6 +1382,7 @@ impl ExtensionManager {
         client_name: String,
         capabilities: ExtensionManagerCapabilities,
         use_login_shell_path: bool,
+        tool_confirmation_router: ToolConfirmationRouter,
     ) -> Self {
         Self {
             extensions: Mutex::new(HashMap::new()),
@@ -1390,6 +1392,7 @@ impl ExtensionManager {
                 scheduler,
                 session: None,
                 use_login_shell_path,
+                tool_confirmation_router: Some(tool_confirmation_router),
             },
             provider,
             tools_cache: Mutex::new(None),
@@ -1413,6 +1416,7 @@ impl ExtensionManager {
                 protocol_version: None,
             },
             false,
+            ToolConfirmationRouter::new(),
         )
     }
 

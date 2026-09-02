@@ -266,6 +266,7 @@ async fn test_replayed_session(
             protocol_version: Some(MCP_PROTOCOL_VERSION),
         },
         true,
+        goose::agents::tool_confirmation_router::ToolConfirmationRouter::new(),
     ));
 
     #[allow(clippy::redundant_closure_call)]
