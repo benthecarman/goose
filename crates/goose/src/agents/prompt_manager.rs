@@ -529,6 +529,7 @@ mod tests {
             scheduler: Some(scheduler),
             session: Some(Arc::new(session)),
             use_login_shell_path: false,
+            tool_confirmation_router: None,
         };
 
         let mut extensions: Vec<ExtensionInfo> = PLATFORM_EXTENSIONS

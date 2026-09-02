@@ -259,6 +259,7 @@ async fn test_replayed_session(
             host_info: None,
         },
         true,
+        goose::agents::tool_confirmation_router::ToolConfirmationRouter::new(),
     ));
 
     #[allow(clippy::redundant_closure_call)]

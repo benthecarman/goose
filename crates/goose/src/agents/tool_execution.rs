@@ -168,11 +168,25 @@ impl Agent {
                         }
                     });
 
-                let confirmation_rx = self.tool_confirmation_router.register(request.id.clone()).await;
+                // Subagent confirmations share the parent's
+                // ToolConfirmationRouter, so keys are namespaced by the
+                // subagent session. Some providers use per-conversation
+                // sequential ids, and a subagent id could otherwise collide
+                // with a pending parent id in the shared router.
+                let confirmation_id = if self.config.is_subagent {
+                    format!("{}:{}", session.id, request.id)
+                } else {
+                    request.id.clone()
+                };
+
+                let confirmation_rx = self
+                    .tool_confirmation_router
+                    .register(confirmation_id.clone())
+                    .await;
 
                 let action_required_msg = Message::assistant()
                     .with_action_required(
-                        request.id.clone(),
+                        confirmation_id,
                         tool_call.name.to_string().clone(),
                         tool_call.arguments.clone().unwrap_or_default(),
                         security_message,

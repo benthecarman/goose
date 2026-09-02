@@ -204,6 +204,10 @@ pub struct AgentConfig {
     pub session_name_update_tx: Option<mpsc::UnboundedSender<SessionNameUpdate>>,
     pub use_login_shell_path: Option<bool>,
     pub is_subagent: bool,
+    /// Shared with the parent agent when this config describes a subagent.
+    /// Subagent tool confirmations register here so confirmations delivered
+    /// to the parent agent reach the subagent that awaits them.
+    pub tool_confirmation_router: Option<ToolConfirmationRouter>,
 }
 
 impl AgentConfig {
@@ -226,6 +230,7 @@ impl AgentConfig {
             session_name_update_tx: None,
             use_login_shell_path: None,
             is_subagent: false,
+            tool_confirmation_router: None,
         }
     }
 
@@ -244,6 +249,16 @@ impl AgentConfig {
 
     pub fn with_use_login_shell_path(mut self, use_login_shell_path: bool) -> Self {
         self.use_login_shell_path = Some(use_login_shell_path);
+        self
+    }
+
+    /// Share the parent's confirmation router so subagent tool confirmations
+    /// are delivered through `Agent::handle_confirmation` on the parent.
+    pub fn with_tool_confirmation_router(
+        mut self,
+        tool_confirmation_router: Option<ToolConfirmationRouter>,
+    ) -> Self {
+        self.tool_confirmation_router = tool_confirmation_router;
         self
     }
 
@@ -399,6 +414,7 @@ impl Agent {
         let permission_manager = Arc::clone(&config.permission_manager);
         let use_login_shell_path = config.resolve_use_login_shell_path();
         let is_subagent = config.is_subagent;
+        let tool_confirmation_router = config.tool_confirmation_router.clone().unwrap_or_default();
         Self {
             provider: provider.clone(),
             config,
@@ -410,13 +426,14 @@ impl Agent {
                 client_name,
                 capabilities,
                 use_login_shell_path,
+                tool_confirmation_router.clone(),
             )),
             final_output_tool: Arc::new(Mutex::new(None)),
             frontend_extensions: Mutex::new(HashMap::new()),
             frontend_tools: Mutex::new(HashMap::new()),
             frontend_instructions: Mutex::new(None),
             prompt_manager: Mutex::new(PromptManager::new()),
-            tool_confirmation_router: ToolConfirmationRouter::new(),
+            tool_confirmation_router,
             tool_result_tx: tool_tx,
             tool_result_rx: Arc::new(Mutex::new(tool_rx)),
             retry_manager: RetryManager::new(),
