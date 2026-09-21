@@ -64,7 +64,9 @@ impl ToolPermissionStore {
         std::fs::create_dir_all(&self.permissions_dir)?;
 
         let path = self.permissions_dir.join("tool_permissions.json");
-        let temp_path = path.with_extension("tmp");
+        // Unique per process: a shared fixed name lets a concurrent process
+        // rename the temp file away before this process's rename.
+        let temp_path = path.with_extension(format!("tmp.{}", std::process::id()));
 
         // Write complete content to temporary file
         let content = serde_json::to_string_pretty(self)?;

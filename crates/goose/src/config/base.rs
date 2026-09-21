@@ -1,6 +1,5 @@
 use crate::config::paths::Paths;
 use crate::config::GooseMode;
-use fs2::FileExt;
 use goose_providers::thinking::ThinkingEffort;
 #[cfg(feature = "system-keyring")]
 use keyring::Entry;
@@ -583,8 +582,11 @@ impl Config {
                 .map_err(|e| ConfigError::DirectoryError(e.to_string()))?;
         }
 
-        // Write to a temporary file first for atomic operation
-        let temp_path = target_path.with_extension("tmp");
+        // Write to a temporary file first for atomic operation. The name is
+        // unique per process: with a shared fixed name, a concurrent process
+        // can rename the temp file away between this process's write and
+        // rename, failing this write with ENOENT.
+        let temp_path = target_path.with_extension(format!("tmp.{}", std::process::id()));
 
         {
             let mut file = OpenOptions::new()
@@ -593,15 +595,8 @@ impl Config {
                 .truncate(true)
                 .open(&temp_path)?;
 
-            // Acquire an exclusive lock
-            file.lock_exclusive()
-                .map_err(|e| ConfigError::LockError(e.to_string()))?;
-
-            // Write the contents using the same file handle
             file.write_all(yaml_value.as_bytes())?;
             file.sync_all()?;
-
-            // Unlock is handled automatically when file is dropped
         }
 
         // Atomically replace the original file
@@ -1668,7 +1663,9 @@ mod tests {
         assert!(serde_yaml::from_str::<serde_yaml::Value>(&content).is_ok());
 
         // The temp file should not exist after successful write
-        let temp_path = config_file.path().with_extension("tmp");
+        let temp_path = config_file
+            .path()
+            .with_extension(format!("tmp.{}", std::process::id()));
         assert!(!temp_path.exists(), "Temporary file should be cleaned up");
 
         Ok(())
