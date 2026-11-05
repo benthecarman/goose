@@ -119,8 +119,9 @@ tool calls that need separate handling.
 
 When the user sends a new message, it becomes the next kickoff and the count
 starts again. No mutable counter needs to survive a restart. This is a limit
-on assistant turns, not a dollar, token, or tool-call budget. The complete goose
-application has its own `MaxTurnsOperation` with additional prompt context.
+on assistant turns, not a dollar, token, or tool-call budget. GDK ships this
+behavior as [`MaxTurnsOperation`](https://docs.rs/goose-agent/latest/goose_agent/max_turns/struct.MaxTurnsOperation.html),
+which also tells the model how much of its budget is used once half is gone.
 
 ## Operations available today
 
@@ -129,12 +130,13 @@ application has its own `MaxTurnsOperation` with additional prompt context.
 These are public APIs in `goose-agent`; your application supplies the required
 tools, provider, or subagent runner:
 
-| Component                                                                                                    | Purpose                                                                                                                        |
-| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| [`ToolOperation`](https://docs.rs/goose-agent/latest/goose_agent/tool/struct.ToolOperation.html)             | Advertise and execute typed synchronous or asynchronous tools, or tools supplied dynamically by a `ToolProvider`.              |
-| [`SubagentOperation`](https://docs.rs/goose-agent/latest/goose_agent/subagent/struct.SubagentOperation.html) | Run requested subagent sessions through your `SubagentRunner`, deliver their updates, and handle concurrency and cancellation. |
-| [`InferenceRunner`](https://docs.rs/goose-agent/latest/goose_agent/inference/struct.InferenceRunner.html)    | Prepare provider requests, stream inference, and return message and usage effects. Register it as an inference step.           |
-| [`SteerOperation`](https://docs.rs/goose-agent/latest/goose_agent/steer/struct.SteerOperation.html)          | Add messages pushed to a `SteerQueue` during a run once pending tool calls are answered, so users can redirect the agent.      |
+| Component                                                                                                     | Purpose                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [`ToolOperation`](https://docs.rs/goose-agent/latest/goose_agent/tool/struct.ToolOperation.html)              | Advertise and execute typed synchronous or asynchronous tools, or tools supplied dynamically by a `ToolProvider`.              |
+| [`SubagentOperation`](https://docs.rs/goose-agent/latest/goose_agent/subagent/struct.SubagentOperation.html)  | Run requested subagent sessions through your `SubagentRunner`, deliver their updates, and handle concurrency and cancellation. |
+| [`InferenceRunner`](https://docs.rs/goose-agent/latest/goose_agent/inference/struct.InferenceRunner.html)     | Prepare provider requests, stream inference, and return message and usage effects. Register it as an inference step.           |
+| [`SteerOperation`](https://docs.rs/goose-agent/latest/goose_agent/steer/struct.SteerOperation.html)           | Add messages pushed to a `SteerQueue` during a run once pending tool calls are answered, so users can redirect the agent.      |
+| [`MaxTurnsOperation`](https://docs.rs/goose-agent/latest/goose_agent/max_turns/struct.MaxTurnsOperation.html) | Yield once the agent has used its budget of assistant turns since the user's last message, with an optional limit message.     |
 
 ### Operations in goose
 
@@ -160,7 +162,6 @@ your application.
 | `EmptyResponseOperation`      | Make an empty-response fallback visible when another operation has not taken over.                |
 | `StopHookOperation`           | Let configured stop hooks accept or block the end of a turn.                                      |
 | `ExitOnErrorOperation`        | Yield when an error remains at the end of the conversation.                                       |
-| `MaxTurnsOperation`           | Enforce goose's autonomous turn budget and contribute remaining-budget context.                   |
 | `AutoEffortOperation`         | Select and record thinking effort for a turn when automatic effort selection is enabled.          |
 | `SlashCommandOperation`       | Route a recognized slash command to operations' command handlers.                                 |
 | `StatusOperation`             | Report the current session, model, and usage through `/status`.                                   |

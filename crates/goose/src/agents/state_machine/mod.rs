@@ -15,7 +15,6 @@ mod ops_doctor;
 mod ops_empty_response;
 mod ops_exit_on_error;
 mod ops_llm;
-mod ops_maxturns;
 mod ops_project;
 pub(crate) mod ops_recipe;
 mod ops_remaining_tool_calls;
@@ -45,6 +44,7 @@ pub use effects::GooseEffect;
 pub use goose_agent::machine::{
     EffectHandler, EffectUsage, MachineSession, SessionLoader, StateMachine, Step,
 };
+pub(super) use goose_agent::max_turns::MaxTurnsOperation;
 pub use goose_agent::operation::{
     applied, assistant_turn_count, ends_turn, last_effective_role, messages_since_kickoff,
     not_applicable, trailing_error, yielded, yielded_with, ConversationEffect, Emitter, Inference,
@@ -72,7 +72,6 @@ pub(super) use ops_empty_response::EmptyResponseOperation;
 pub(crate) use ops_exit_on_error::turn_failure;
 pub(super) use ops_exit_on_error::ExitOnErrorOperation;
 pub(super) use ops_llm::{enrich_unclaimed_tool_errors, GooseInferenceProvider, InferenceRunner};
-pub(super) use ops_maxturns::{MaxTurnsOperation, MAX_TURNS_MESSAGE};
 pub(super) use ops_project::ProjectOperation;
 pub(super) use ops_recipe::RecipeOperation;
 pub(super) use ops_remaining_tool_calls::RemainingToolCallsOperation;
@@ -90,3 +89,5 @@ pub(super) use pre_tool_hook::GoosePreToolHook;
 pub(super) use steer_hook::GooseSteerHook;
 pub(super) use stop_hook::{deny_limit_warning, GooseStopHook};
 pub(super) use tool_approval::GooseToolApproval;
+
+pub(super) const MAX_TURNS_MESSAGE: &str = "I've reached the maximum number of actions I can do without user input. Would you like me to continue?";

@@ -20,11 +20,12 @@ use crate::agents::state_machine::{
     RemainingToolCallsOperation, RetryOperation, SkillOperation, SlashCommandOperation,
     StateMachine, StatusOperation, SteerOperation, SteerQueue, Step, StopHookOperation,
     SubagentOperation, ToolApprovalOperation, ToolExecutionOperation, ToolPairCompactionOperation,
-    UnhandledToolCallsOperation,
+    UnhandledToolCallsOperation, MAX_TURNS_MESSAGE,
 };
 use crate::agents::subagent_handler::ForegroundSubagentRunner;
 use crate::agents::tool_execution::DECLINED_RESPONSE;
 use crate::config::Config;
+use crate::conversation::message::Message;
 use crate::hooks::HookManager;
 use crate::providers::base::Provider;
 use crate::session::{Session, SessionManager};
@@ -194,7 +195,10 @@ pub(crate) fn build_state_machine(
                 .with_deny_limit_message(move || deny_limit_warning(stop_hook_block_cap)),
         ),
         Arc::new(ExitOnErrorOperation),
-        Arc::new(MaxTurnsOperation::new(max_turns)),
+        Arc::new(
+            MaxTurnsOperation::new(max_turns)
+                .with_limit_message(|| Message::assistant().with_text(MAX_TURNS_MESSAGE)),
+        ),
     ];
     operations.extend(remaining_operations);
     operations.extend(extra_operations);
