@@ -162,7 +162,7 @@ impl SessionRuntime {
     }
 
     pub(super) async fn steer(&self, session_id: &str, message: Message) {
-        self.steer_queue(session_id).lock().await.push_back(message);
+        self.steer_queue(session_id).push(message);
     }
 
     pub(super) fn discard_pending_steers(&self, session_id: &str) {

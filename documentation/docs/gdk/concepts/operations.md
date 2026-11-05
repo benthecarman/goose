@@ -134,6 +134,7 @@ tools, provider, or subagent runner:
 | [`ToolOperation`](https://docs.rs/goose-agent/latest/goose_agent/tool/struct.ToolOperation.html)             | Advertise and execute typed synchronous or asynchronous tools, or tools supplied dynamically by a `ToolProvider`.              |
 | [`SubagentOperation`](https://docs.rs/goose-agent/latest/goose_agent/subagent/struct.SubagentOperation.html) | Run requested subagent sessions through your `SubagentRunner`, deliver their updates, and handle concurrency and cancellation. |
 | [`InferenceRunner`](https://docs.rs/goose-agent/latest/goose_agent/inference/struct.InferenceRunner.html)    | Prepare provider requests, stream inference, and return message and usage effects. Register it as an inference step.           |
+| [`SteerOperation`](https://docs.rs/goose-agent/latest/goose_agent/steer/struct.SteerOperation.html)          | Add messages pushed to a `SteerQueue` during a run once pending tool calls are answered, so users can redirect the agent.      |
 
 ### Operations in goose
 
@@ -150,7 +151,6 @@ your application.
 | `RemainingToolCallsOperation` | Answer declined, invalid, or unhandled calls, and yield while approval is pending.                |
 | `SkillOperation`              | Discover and load skills, contribute their context, and handle skill commands.                    |
 | `RecipeOperation`             | Apply recipe instructions and tools, handle recipe commands, and collect structured final output. |
-| `SteerOperation`              | Incorporate queued user guidance between model and tool turns.                                    |
 | `BangShellOperation`          | Turn a user message beginning with `!` into a direct shell tool request.                          |
 | `CompactionOperation`         | Compact conversation history automatically or through a command.                                  |
 | `ToolPairCompactionOperation` | Summarize older tool request/response pairs to reduce context size.                               |

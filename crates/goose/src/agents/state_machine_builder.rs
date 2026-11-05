@@ -15,11 +15,12 @@ use crate::agents::state_machine::{
     deny_limit_warning, BangShellOperation, CompactionOperation, ContextRelevanceOperation,
     DoctorOperation, EmptyResponseOperation, ExitOnErrorOperation, GooseEffect,
     GooseInferenceProvider, GooseInferenceRequestPreparer, GoosePostToolHook, GoosePreToolHook,
-    GooseStopHook, GooseToolApproval, InferenceRunner, MaxTurnsOperation, Operation,
-    PreToolCallHookOperation, ProjectOperation, RecipeOperation, RemainingToolCallsOperation,
-    RetryOperation, SkillOperation, SlashCommandOperation, StateMachine, StatusOperation,
-    SteerOperation, SteerQueue, Step, StopHookOperation, SubagentOperation, ToolApprovalOperation,
-    ToolExecutionOperation, ToolPairCompactionOperation, UnhandledToolCallsOperation,
+    GooseSteerHook, GooseStopHook, GooseToolApproval, InferenceRunner, MaxTurnsOperation,
+    Operation, PreToolCallHookOperation, ProjectOperation, RecipeOperation,
+    RemainingToolCallsOperation, RetryOperation, SkillOperation, SlashCommandOperation,
+    StateMachine, StatusOperation, SteerOperation, SteerQueue, Step, StopHookOperation,
+    SubagentOperation, ToolApprovalOperation, ToolExecutionOperation, ToolPairCompactionOperation,
+    UnhandledToolCallsOperation,
 };
 use crate::agents::subagent_handler::ForegroundSubagentRunner;
 use crate::agents::tool_execution::DECLINED_RESPONSE;
@@ -155,7 +156,10 @@ pub(crate) fn build_state_machine(
                     .unwrap_or(NonZeroUsize::new(5).unwrap()),
             ),
         ),
-        Arc::new(SteerOperation::new(steer_queue, hook_manager.clone())),
+        Arc::new(
+            SteerOperation::new(steer_queue)
+                .with_hook(Arc::new(GooseSteerHook::new(hook_manager.clone()))),
+        ),
         Arc::new(BangShellOperation::new()),
     ];
     if !manages_own_context {

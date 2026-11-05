@@ -403,12 +403,7 @@ impl TestPipeline {
 
     pub(super) async fn has_pending_steers(&self) -> bool {
         let services = self.services().await;
-        !services
-            .runtime
-            .steer_queue(&self.session_id)
-            .lock()
-            .await
-            .is_empty()
+        !services.runtime.steer_queue(&self.session_id).is_empty()
     }
 
     pub(super) fn calculator_total(&self) -> i64 {
